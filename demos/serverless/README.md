@@ -43,7 +43,8 @@ The S3 bucket will be created with a prefix specified with the -o option.
 ```
 cd demos/serverless
 npm install
-npm run deploy -- -r us-east-1 -b <deploy-bucket> -o <capture-bucket-prefix> -s <my-stack-name> -a meeting
+npm run deploy -- -r ap-southeast-1 -b chime-stage -o chime-stage -s chime-stage -a meeting --chime-sdk-media-pipelines-region ap-southeast-1
+
 ```
 
 When the bucket prefix is provided, an S3 bucket will be created in each AWS region that
@@ -97,6 +98,9 @@ Over time JS SDK will push new features, improvements, and bug fixes etc. It is 
 ```
 cd demos/serverless
 node ./deploy.js -r us-east-1 -b <my-bucket> -s <my-stack-name> -a meeting
+node ./deploy.js -r ap-southeast-1 -b chime-deploy-s3 -s chime-prod -a meeting
+node ./deploy.js -r ap-southeast-1 -b chime-stage-s3 -s chime-stage -a meeting
+
 ```
 
 ### Cleaning up

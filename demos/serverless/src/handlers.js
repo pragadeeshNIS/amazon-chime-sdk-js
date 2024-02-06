@@ -10,6 +10,7 @@ const { Ivs } = require('@aws-sdk/client-ivs');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { metricScope } = require('aws-embedded-metrics');
+const { request } = require('http');
 
 // Store meetings in a DynamoDB table so attendees can join by meeting title
 const ddb = new DynamoDB();
@@ -424,14 +425,21 @@ exports.start_capture = async (event, context) => {
 
   let captureS3Destination = `arn:aws:s3:::${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/`
   const request = {
+    ChimeSdkMeetingConfiguration: {
+      ArtifactsConfiguration: {
+        Audio: { MuxType: 'AudioOnly' },
+        Content: { State: 'Disabled' },
+        Video: { State: 'Disabled' },
+      },
+    },
     SourceType: "ChimeSdkMeeting",
     SourceArn: `arn:aws:chime::${AWS_ACCOUNT_ID}:meeting:${meeting.Meeting.MeetingId}`,
     SinkType: "S3Bucket",
     SinkArn: captureS3Destination,
+    Tags: [{ Key: 'transcription-for-comprehend', Value: 'true' }],
   };
   console.log("Creating new media capture pipeline: ", request)
-  pipelineInfo = await chimeSdkMediaPipelines.createMediaCapturePipeline(request);
-
+  pipelineInfo = await createMediacapture(request);
   await putCapturePipeline(event.queryStringParameters.title, pipelineInfo)
   console.log("Successfully created media capture pipeline: ", pipelineInfo);
 
@@ -441,11 +449,13 @@ exports.start_capture = async (event, context) => {
 exports.end_capture = async (event, context) => {
   // Fetch the capture info by title
   const pipelineInfo = await getCapturePipeline(event.queryStringParameters.title);
+  const meeting = await getMeeting(event.queryStringParameters.title);
   if (pipelineInfo) {
     await chimeSdkMediaPipelines.deleteMediaCapturePipeline({
       MediaPipelineId: pipelineInfo.MediaCapturePipeline.MediaPipelineId
     });
-    return response(200, 'application/json', JSON.stringify({}));
+    concat = await concatMediaPipeline(pipelineInfo.MediaCapturePipeline.MediaPipelineArn, meeting);
+    return response(200, 'application/json', JSON.stringify(concat));
   } else {
     return response(500, 'application/json', JSON.stringify({ msg: "No pipeline to stop for this meeting" }))
   }
@@ -649,6 +659,61 @@ async function putMeeting(title, meeting) {
   });
 }
 
+//Create capture pipleine 
+async function createMediacapture(request) {
+  pipelineInfo = await chimeSdkMediaPipelines.createMediaCapturePipeline(request);
+  return pipelineInfo
+}
+
+async function concatMediaPipeline(capturePipelineArn, meeting) {
+  meetingRegion = meeting.Meeting.MediaRegion;
+  let captureS3Destination = `arn:aws:s3:::${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/concat/`
+  const request = {
+    Sources: [
+        {
+            Type: "MediaCapturePipeline",
+            MediaCapturePipelineSourceConfiguration: {
+                MediaPipelineArn: capturePipelineArn,
+                ChimeSdkMeetingConfiguration: {
+                    ArtifactsConfiguration: {
+                        Audio: {
+                            State: "Enabled"
+                        },
+                        Video: {
+                            State: "Disabled"
+                        },
+                        Content: {
+                            State: "Disabled"
+                        },
+                        DataChannel: {
+                            State: "Disabled"
+                        },
+                        TranscriptionMessages: {
+                            State: "Disabled"
+                        },
+                        MeetingEvents: {
+                            State: "Disabled"
+                        },
+                        CompositedVideo: {
+                            State: "Disabled"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    Sinks: [
+        {
+            Type: "S3Bucket",
+            S3BucketSinkConfiguration: {
+                Destination: captureS3Destination
+            }
+        }
+    ]
+};
+  pipelineInfo = chimeSdkMediaPipelines.createMediaConcatenationPipeline(request);
+  return pipelineInfo
+}
 // Retrieves capture data for a meeting by title
 async function getCapturePipeline(title) {
   const result = await ddb.getItem({
