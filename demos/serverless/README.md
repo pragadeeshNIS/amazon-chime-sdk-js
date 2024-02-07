@@ -45,6 +45,8 @@ cd demos/serverless
 npm install
 npm run deploy -- -r ap-southeast-1 -b chime-stage -o chime-stage -s chime-stage -a meeting --chime-sdk-media-pipelines-region ap-southeast-1
 
+npm run deploy -- -r ap-southeast-1 -b chime-stage-deployment -o chime-stage-capture -s chime-stage-stack -a meeting -m https://meetings-chime.ap-southeast-1.amazonaws.com --chime-sdk-media-pipelines-region ap-southeast-1 --chime-sdk-media-pipelines-endpoint https://media-pipelines-chime.ap-southeast-1.amazonaws.com
+
 ```
 
 When the bucket prefix is provided, an S3 bucket will be created in each AWS region that
@@ -98,8 +100,12 @@ Over time JS SDK will push new features, improvements, and bug fixes etc. It is 
 ```
 cd demos/serverless
 node ./deploy.js -r us-east-1 -b <my-bucket> -s <my-stack-name> -a meeting
-node ./deploy.js -r ap-southeast-1 -b chime-deploy-s3 -s chime-prod -a meeting
-node ./deploy.js -r ap-southeast-1 -b chime-stage-s3 -s chime-stage -a meeting
+
+Stage  : 
+node ./deploy.js -r ap-southeast-1 -b chime-deploy-s3 -s chime-prod -a meeting -m https://meetings-chime.ap-southeast-1.amazonaws.com --chime-sdk-media-pipelines-region ap-southeast-1 --chime-sdk-media-pipelines-endpoint https://media-pipelines-chime.ap-southeast-1.amazonaws.com
+
+Others : 
+node ./deploy.js -r ap-southeast-1 -b chime-stage -s chime-stage-stack -a meeting -m https://meetings-chime.ap-southeast-1.amazonaws.com --chime-sdk-media-pipelines-region ap-southeast-1 --chime-sdk-media-pipelines-endpoint https://media-pipelines-chime.ap-southeast-1.amazonaws.com
 
 ```
 

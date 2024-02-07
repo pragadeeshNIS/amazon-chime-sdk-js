@@ -440,6 +440,7 @@ exports.start_capture = async (event, context) => {
   };
   console.log("Creating new media capture pipeline: ", request)
   pipelineInfo = await createMediacapture(request);
+  pipelineInfo.meetingId = meeting.Meeting.MeetingId;
   await putCapturePipeline(event.queryStringParameters.title, pipelineInfo)
   console.log("Successfully created media capture pipeline: ", pipelineInfo);
 
@@ -712,6 +713,7 @@ async function concatMediaPipeline(capturePipelineArn, meeting) {
     ]
 };
   pipelineInfo = chimeSdkMediaPipelines.createMediaConcatenationPipeline(request);
+  pipelineInfo.captureS3Destination = captureS3Destination;
   return pipelineInfo
 }
 // Retrieves capture data for a meeting by title
