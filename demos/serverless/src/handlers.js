@@ -456,11 +456,16 @@ exports.end_capture = async (event, context) => {
       MediaPipelineId: pipelineInfo.MediaCapturePipeline.MediaPipelineId
     });
     concat = await concatMediaPipeline(pipelineInfo.MediaCapturePipeline.MediaPipelineArn, meeting);
-    return response(200, 'application/json', JSON.stringify(concat));
+    if (concat != null) {
+      return response(200, 'application/json', JSON.stringify(concat));
+    } else {
+      return response(500, 'application/json', JSON.stringify({ msg: "Concatenation failed"}));
+    }
   } else {
-    return response(500, 'application/json', JSON.stringify({ msg: "No pipeline to stop for this meeting" }))
+    return response(500, 'application/json', JSON.stringify({ msg: "No pipeline to stop for this meeting" }));
   }
 };
+
 
 
 exports.start_live_connector = async (event, context) => {
@@ -666,9 +671,17 @@ async function createMediacapture(request) {
   return pipelineInfo
 }
 
+//Create concat capture pipleine 
+async function concatMediacapture(request) {
+  concatPipeline = await chimeSdkMediaPipelines.createMediaConcatenationPipeline(request);
+  return concatPipeline
+}
+
 async function concatMediaPipeline(capturePipelineArn, meeting) {
   meetingRegion = meeting.Meeting.MediaRegion;
   let captureS3Destination = `arn:aws:s3:::${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/concat/`
+  console.log(`sourceARN : ${capturePipelineArn}`);
+  console.log(`destination : ${captureS3Destination}`);
   const request = {
     Sources: [
         {
@@ -712,9 +725,15 @@ async function concatMediaPipeline(capturePipelineArn, meeting) {
         }
     ]
 };
-  pipelineInfo = chimeSdkMediaPipelines.createMediaConcatenationPipeline(request);
-  pipelineInfo.captureS3Destination = captureS3Destination;
-  return pipelineInfo
+  console.log(`createMediaConcatenationPipeline request : ${JSON.stringify(request)}`);
+  pipelineInfo = await concatMediacapture(request);
+  console.log(`createMediaConcatenationPipeline response : ${JSON.stringify(pipelineInfo)}`);
+  if(pipelineInfo != null) {
+    console.log(`${captureS3Destination}/${pipelineInfo.MediaConcatenationPipeline.MediaPipelineId}`)
+    return `s3://${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/concat/audio/${pipelineInfo.MediaConcatenationPipeline.MediaPipelineId}.mp4`;
+  } else {
+    return null;
+  }
 }
 // Retrieves capture data for a meeting by title
 async function getCapturePipeline(title) {

@@ -231,11 +231,16 @@ function createCaptureS3Buckets(bucketPrefix, regions) {
       "Statement": [{
         "Sid": "Stmt1625687206729",
         "Action": [
-          "s3:PutObject",
-          "s3:PutObjectAcl"
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:GetObject",
+                "s3:ListBucket"
         ],
         "Effect": "Allow",
-        "Resource": `arn:aws:s3:::${bucketName}/*`,
+        "Resource": [
+          `arn:aws:s3:::${bucketName}/*`
+          `arn:aws:s3:::${bucketName}`
+        ],
         "Principal": {
           "Service": [
             chimeMediaPipelinesServicePrincipal

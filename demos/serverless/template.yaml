@@ -85,6 +85,7 @@ Resources:
               - 'chime:StopMeetingTranscription'
               - 'chime:CreateMediaCapturePipeline'
               - 'chime:DeleteMediaCapturePipeline'
+              - 'chime:CreateMediaConcatenationPipeline'
               - 'chime:CreateMediaLiveConnectorPipeline'
               - 'chime:DeleteMediaPipeline'
               - 'chime:UpdateAttendeeCapabilities'
