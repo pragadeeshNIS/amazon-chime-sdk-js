@@ -729,8 +729,9 @@ async function concatMediaPipeline(capturePipelineArn, meeting) {
   pipelineInfo = await concatMediacapture(request);
   console.log(`createMediaConcatenationPipeline response : ${JSON.stringify(pipelineInfo)}`);
   if(pipelineInfo != null) {
-    console.log(`${captureS3Destination}/${pipelineInfo.MediaConcatenationPipeline.MediaPipelineId}`)
-    return `s3://${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/concat/audio/${pipelineInfo.MediaConcatenationPipeline.MediaPipelineId}.mp4`;
+    recordedPath = `s3://${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/concat/audio/${pipelineInfo.MediaConcatenationPipeline.MediaPipelineId}.mp4`;
+    console.log(recordedPath);
+    return recordedPath;
   } else {
     return null;
   }
