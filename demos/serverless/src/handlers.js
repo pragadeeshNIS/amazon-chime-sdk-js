@@ -457,7 +457,7 @@ exports.end_capture = async (event, context) => {
     });
     concat = await concatMediaPipeline(pipelineInfo.MediaCapturePipeline.MediaPipelineArn, meeting);
     if (concat != null) {
-      return response(200, 'application/json', JSON.stringify(concat));
+      return response(200, 'application/json', JSON.stringify({path: concat}));
     } else {
       return response(500, 'application/json', JSON.stringify({ msg: "Concatenation failed"}));
     }

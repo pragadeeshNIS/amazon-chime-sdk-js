@@ -45,7 +45,9 @@ Globals:
   Function:
     Runtime: nodejs14.x
     Timeout: 30
-    MemorySize: 128
+    MemorySize: 1024
+    EphemeralStorage:
+      Size: 1024
     Environment:
       Variables:
         MEETINGS_TABLE_NAME: !Ref Meetings
