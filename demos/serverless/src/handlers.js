@@ -451,15 +451,27 @@ exports.end_capture = async (event, context) => {
   // Fetch the capture info by title
   const pipelineInfo = await getCapturePipeline(event.queryStringParameters.title);
   const meeting = await getMeeting(event.queryStringParameters.title);
+  const path = await getConcatPath(event.queryStringParameters.title);
   if (pipelineInfo) {
-    await chimeSdkMediaPipelines.deleteMediaCapturePipeline({
-      MediaPipelineId: pipelineInfo.MediaCapturePipeline.MediaPipelineId
-    });
-    concat = await concatMediaPipeline(pipelineInfo.MediaCapturePipeline.MediaPipelineArn, meeting);
-    if (concat != null) {
-      return response(200, 'application/json', JSON.stringify({path: concat}));
-    } else {
-      return response(500, 'application/json', JSON.stringify({ msg: "Concatenation failed"}));
+    try {
+      await chimeSdkMediaPipelines.deleteMediaCapturePipeline({
+        MediaPipelineId: pipelineInfo.MediaCapturePipeline.MediaPipelineId
+      });
+      const concat = await concatMediaPipeline(pipelineInfo.MediaCapturePipeline.MediaPipelineArn, meeting);
+      await putConcatPath(event.queryStringParameters.title, concat);
+      if (concat != null) {
+        console.log("new s3 path returned");
+        return response(200, 'application/json', JSON.stringify({path: concat}));
+      } else {
+        return response(500, 'application/json', JSON.stringify({ msg: "Concatenation failed"}));
+      }
+    } catch (exception) {
+      if(path != null) {
+        console.log("existing s3 path returned");
+        return response(200, 'application/json', JSON.stringify({path: path}));
+      } else {
+        return response(500, 'application/json', JSON.stringify({ msg: "Concatenation failed"}));
+      }
     }
   } else {
     return response(500, 'application/json', JSON.stringify({ msg: "No pipeline to stop for this meeting" }));
@@ -759,6 +771,32 @@ async function putCapturePipeline(title, capture) {
     UpdateExpression: "SET CaptureData = :capture",
     ExpressionAttributeValues: {
       ":capture": { S: JSON.stringify(capture) }
+    }
+  })
+}
+
+// Retrieves concat path for a meeting by title
+async function getConcatPath(title) {
+  const result = await ddb.getItem({
+    TableName: MEETINGS_TABLE_NAME,
+    Key: {
+      'Title': {
+        S: title
+      }
+    }
+  });
+  return result.Item && result.Item.ConcatPath ? JSON.parse(result.Item.ConcatPath.S) : null;
+}
+
+async function putConcatPath(title, path) {
+  await ddb.updateItem({
+    TableName: MEETINGS_TABLE_NAME,
+    Key: {
+      'Title': { S: title }
+    },
+    UpdateExpression: "SET ConcatPath = :concat",
+    ExpressionAttributeValues: {
+      ":concat": { S: JSON.stringify(path) }
     }
   })
 }
