@@ -423,6 +423,13 @@ exports.start_capture = async (event, context) => {
   const meeting = await getMeeting(event.queryStringParameters.title);
   meetingRegion = meeting.Meeting.MediaRegion;
 
+  const existingPipelineInfo = await getCapturePipeline(event.queryStringParameters.title);
+
+  if(existingPipelineInfo != null) {
+    console.log("Media capture pipeline already exist: ", existingPipelineInfo)
+    return response(201, 'application/json', JSON.stringify(existingPipelineInfo));
+  }
+
   let captureS3Destination = `arn:aws:s3:::${CAPTURE_S3_DESTINATION_PREFIX}-${meetingRegion}/${meeting.Meeting.MeetingId}/`
   const request = {
     ChimeSdkMeetingConfiguration: {
