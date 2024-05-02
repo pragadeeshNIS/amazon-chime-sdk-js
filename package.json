@@ -1,6 +1,6 @@
 {
   "name": "amazon-chime-sdk-js",
-  "version": "3.20.0",
+  "version": "3.22.0",
   "description": "Amazon Chime SDK for JavaScript",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -11,7 +11,7 @@
     "NOTICE"
   ],
   "engines": {
-    "node": "^18 || ^19 || ^20",
+    "node": "^18 || ^19 || ^20 || ^22",
     "npm": "^8 || ^9 || ^10"
   },
   "scripts": {
